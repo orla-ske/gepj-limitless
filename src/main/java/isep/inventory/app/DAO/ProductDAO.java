@@ -114,6 +114,7 @@ public class ProductDAO {
                         rs.getString("source")
                 ));
             }
+            return products;
         }catch(SQLException e){
             e.printStackTrace();
         }
