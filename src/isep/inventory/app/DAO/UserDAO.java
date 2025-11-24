@@ -103,7 +103,4 @@ public class UserDAO {
         return null;
     }
 
-    public int randomint(){
-        return 6;
-    }
 }
