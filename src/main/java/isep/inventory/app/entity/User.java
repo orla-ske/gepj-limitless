@@ -1,11 +1,15 @@
 package isep.inventory.app.entity;
 
+import isep.inventory.app.entity.Role;
+
 public class User {
     private int id;
     private String username;
     private String password;
     private String firstName;
     private String lastName;
+    private Role role;
+    private int company_id;
 
     public User(){}
 
@@ -16,11 +20,13 @@ public class User {
         this.lastName = lastName;
     }
 
-    public User(int id, String username, String firstName, String lastName) {
+    public User(int id, String username, String firstName, String lastName, Role role, int company_id) {
         this.id = id;
         this.username = username;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.role = role;
+        this.company_id = company_id;
     }
 
     public String getFirstName() {
@@ -62,4 +68,21 @@ public class User {
     public void setId(int id) {
         this.id = id;
     }
+
+    public int getCompany_id() {
+        return company_id;
+    }
+
+    public void setCompany_id(int company_id) {
+        this.company_id = company_id;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
 }

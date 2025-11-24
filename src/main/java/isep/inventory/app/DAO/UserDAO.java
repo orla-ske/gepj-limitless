@@ -1,6 +1,7 @@
 package isep.inventory.app.DAO;
 
 import isep.inventory.app.DatabaseConnection;
+import isep.inventory.app.entity.Role;
 import isep.inventory.app.entity.User;
 
 import java.sql.*;
@@ -15,12 +16,13 @@ public class UserDAO {
     }
 
     public boolean createUser(User user) {
-        String sql = "INSERT INTO users (username, password,firstName,lastName) VALUES (?,?,?,?)";
+        String sql = "INSERT INTO users (username, password,firstName,lastName) VALUES (?,?,?,?,?)";
         try(PreparedStatement pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, user.getUsername());
             pstmt.setString(2, user.getPassword());
             pstmt.setString(3, user.getFirstName());
             pstmt.setString(4, user.getLastName());
+            pstmt.setString(5, user.getRole().name());
 
             int rowsAffected = pstmt.executeUpdate();
 
@@ -38,12 +40,13 @@ public class UserDAO {
     }
 
     public boolean updateUser(User user) {
-        String sql = "UPDATE users SET firstName = ?, lastName = ?, username = ? WHERE id = ?";
+        String sql = "UPDATE users SET firstName = ?, lastName = ?, username = ?, role = ? WHERE id = ?";
         try(PreparedStatement pstmt = connection.prepareStatement(sql)){
             pstmt.setString(1, user.getFirstName());
             pstmt.setString(2, user.getLastName());
             pstmt.setString(3, user.getUsername());
-            pstmt.setInt(4, user.getId());
+            pstmt.setInt(5, user.getId());
+            pstmt.setString(4, user.getRole().name());
 
             return pstmt.executeUpdate() > 0;
         }catch(SQLException e){
@@ -74,7 +77,9 @@ public class UserDAO {
                         rs.getInt("id"),
                         rs.getString("username"),
                         rs.getString("firstname"),
-                        rs.getString("lastname")
+                        rs.getString("lastname"),
+                        Role.valueOf(rs.getString("role")),
+                        rs.getInt("company_id")
                 ));
             }
 
@@ -94,7 +99,9 @@ public class UserDAO {
                         rs.getInt("id"),
                         rs.getString("username"),
                         rs.getString("firstname"),
-                        rs.getString("lastname"));
+                        rs.getString("lastname"),
+                        Role.valueOf(rs.getString("role")),
+                        rs.getInt("company_id"));
             }
         }catch(SQLException e){
             e.printStackTrace();

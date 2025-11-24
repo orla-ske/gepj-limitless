@@ -7,6 +7,28 @@ public class Product {
     private int stock;
     private boolean available;
     private double price;
+    private String category;
+    private String sourceCompany;
+
+    public Product(){}
+
+    public Product(int id,
+                   String name,
+                   String description,
+                   int stock,
+                   boolean available,
+                   double price,
+                   String category,
+                   String sourceCompany){
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.stock = stock;
+        this.available = available;
+        this.price = price;
+        this.category = category;
+        this.sourceCompany = sourceCompany;
+    }
 
     public String getName() {
         return name;
@@ -54,5 +76,21 @@ public class Product {
 
     public void setAvailable(boolean available) {
         this.available = available;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getSourceCompany() {
+        return sourceCompany;
+    }
+
+    public void setSourceCompany(String sourceCompany) {
+        this.sourceCompany = sourceCompany;
     }
 }
