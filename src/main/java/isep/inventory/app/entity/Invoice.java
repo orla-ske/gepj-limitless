@@ -4,10 +4,29 @@ import java.util.Date;
 import java.util.List;
 
 public class Invoice {
+    int id;
     List<Product> products;
     Date date;
     String sourceCompany;
     String destinationCompany;
+
+    public Invoice(){}
+
+    public Invoice(int id, List<Product> products, Date date, String sourceCompany, String destinationCompany) {
+        this.id = id;
+        this.products = products;
+        this.date = date;
+        this.sourceCompany = sourceCompany;
+        this.destinationCompany = destinationCompany;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public List<Product> getProducts() {
         return products;

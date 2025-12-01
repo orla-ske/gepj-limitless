@@ -9,6 +9,7 @@ public class Product {
     private double price;
     private String category;
     private String sourceCompany;
+    private int quantity;
 
     public Product(){}
 
@@ -92,5 +93,13 @@ public class Product {
 
     public void setSourceCompany(String sourceCompany) {
         this.sourceCompany = sourceCompany;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
     }
 }
