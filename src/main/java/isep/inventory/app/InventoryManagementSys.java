@@ -5,6 +5,7 @@ import isep.inventory.app.entity.Product;
 import isep.inventory.app.entity.Role;
 import isep.inventory.app.entity.User;
 import isep.inventory.app.services.InventoryService;
+import isep.inventory.app.services.AuthenticationService;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -26,6 +27,7 @@ public class InventoryManagementSys extends Application {
 
     private Stage primaryStage;
     private InventoryService inventoryService;
+    private AuthenticationService authenticationService;
     private User currentUser;
     private ObservableList<Product> tableData;
 
@@ -43,6 +45,7 @@ public class InventoryManagementSys extends Application {
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
         this.inventoryService = new InventoryService();
+        this.authenticationService = new AuthenticationService();
         this.tableData = FXCollections.observableArrayList();
 
         primaryStage.setTitle("Limitless FX - Inventory Hub");
@@ -76,8 +79,8 @@ public class InventoryManagementSys extends Application {
             String user = usernameField.getText();
             String pass = passwordField.getText();
 
-            if ("admin".equals(user) && "password".equals(pass)) {
-                this.currentUser = new User(Role.ADMIN);
+            if(authenticationService.login(user, pass)){
+                this.currentUser = authenticationService.getUserByUsername(user);
                 showDashboardScreen();
             } else {
                 errorLabel.setText("Invalid credentials");
@@ -300,7 +303,7 @@ public class InventoryManagementSys extends Application {
         TextField nameField = new TextField();
         nameField.setPromptText("Name");
         TextField skuField = new TextField();
-        skuField.setPromptText("SKU");
+        skuField.setPromptText("Category");
         TextField qtyField = new TextField();
         qtyField.setPromptText("Quantity");
         TextField locField = new TextField();
