@@ -2,5 +2,6 @@ package isep.inventory.app.entity;
 
 public enum Role {
     RETAILER,
-    WHOLESALER
+    WHOLESALER,
+    ADMIN
 }

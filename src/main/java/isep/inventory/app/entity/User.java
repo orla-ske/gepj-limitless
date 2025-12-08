@@ -13,6 +13,10 @@ public class User {
 
     public User(){}
 
+    public User(Role role){
+        this.role = role;
+    }
+
     public User(String username, String password, String firstName, String lastNameRole,Role role, int company_id) {
         this.username = username;
         this.password = password;

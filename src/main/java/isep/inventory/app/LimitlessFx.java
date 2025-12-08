@@ -1,9 +1,10 @@
 package isep.inventory.app;
 
-import isep.inventory.app.DAO.DashboardStats;
-import isep.inventory.app.entity.InventoryItem;
+//import isep.inventory.app.DAO.DashboardStats;
+import isep.inventory.app.entity.Product;
+import isep.inventory.app.entity.Role;
 import isep.inventory.app.entity.User;
-import isep.inventory.app.service.InventoryService;
+import isep.inventory.app.services.InventoryService;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -26,13 +27,13 @@ public class LimitlessFx extends Application {
     private Stage primaryStage;
     private InventoryService inventoryService;
     private User currentUser;
-    private ObservableList<InventoryItem> tableData;
+    private ObservableList<Product> tableData;
 
     // Dashboard Components
     private Label totalStockLabel;
     private Label totalItemsLabel;
     private Label lowStockLabel;
-    private TableView<InventoryItem> table;
+    private TableView<Product> table;
 
     public static void main(String[] args) {
         launch(args);
@@ -76,7 +77,7 @@ public class LimitlessFx extends Application {
             String pass = passwordField.getText();
 
             if ("admin".equals(user) && "password".equals(pass)) {
-                this.currentUser = new User(1L, "admin", "hashed", "Admin User", "Manager");
+                this.currentUser = new User(Role.ADMIN);
                 showDashboardScreen();
             } else {
                 errorLabel.setText("Invalid credentials");
@@ -106,7 +107,7 @@ public class LimitlessFx extends Application {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Label userLabel = new Label("Logged in as: " + (currentUser != null ? currentUser.getName() : "Unknown"));
+        Label userLabel = new Label("Logged in as: " + (currentUser != null ? currentUser.getUsername() : "Unknown"));
         userLabel.getStyleClass().add("user-label");
 
         Button logoutButton = new Button("Logout");
@@ -186,21 +187,21 @@ public class LimitlessFx extends Application {
 
     @SuppressWarnings("unchecked")
     private void setupTable() {
-        TableColumn<InventoryItem, String> nameCol = new TableColumn<>("Name");
+        TableColumn<Product, String> nameCol = new TableColumn<>("Name");
         nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
 
-        TableColumn<InventoryItem, String> skuCol = new TableColumn<>("SKU");
-        skuCol.setCellValueFactory(new PropertyValueFactory<>("sku"));
+        TableColumn<Product, String> skuCol = new TableColumn<>("Category");
+        skuCol.setCellValueFactory(new PropertyValueFactory<>("category"));
 
-        TableColumn<InventoryItem, Integer> qtyCol = new TableColumn<>("Quantity");
-        qtyCol.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+        TableColumn<Product, Integer> qtyCol = new TableColumn<>("Quantity");
+        qtyCol.setCellValueFactory(new PropertyValueFactory<>("stock"));
 
-        TableColumn<InventoryItem, String> locCol = new TableColumn<>("Location");
-        locCol.setCellValueFactory(new PropertyValueFactory<>("location"));
+        TableColumn<Product, String> locCol = new TableColumn<>("Company");
+        locCol.setCellValueFactory(new PropertyValueFactory<>("sourceCompany"));
 
-        TableColumn<InventoryItem, String> statusCol = new TableColumn<>("Status");
-        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
-        statusCol.setCellFactory(column -> new TableCell<InventoryItem, String>() {
+        TableColumn<Product, String> statusCol = new TableColumn<>("Status");
+        statusCol.setCellValueFactory(new PropertyValueFactory<>("isAvailable"));
+        statusCol.setCellFactory(column -> new TableCell<Product, String>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
@@ -216,8 +217,8 @@ public class LimitlessFx extends Application {
             }
         });
 
-        TableColumn<InventoryItem, Void> actionCol = new TableColumn<>("Actions");
-        actionCol.setCellFactory(param -> new TableCell<InventoryItem, Void>() {
+        TableColumn<Product, Void> actionCol = new TableColumn<>("Actions");
+        actionCol.setCellFactory(param -> new TableCell<Product, Void>() {
             private final Button editBtn = new Button("Edit");
             private final Button deleteBtn = new Button("Delete");
             private final HBox pane = new HBox(10, editBtn, deleteBtn);
@@ -227,7 +228,7 @@ public class LimitlessFx extends Application {
                 deleteBtn.getStyleClass().add("small-danger-button");
                 editBtn.setOnAction(event -> showItemDialog(getTableView().getItems().get(getIndex())));
                 deleteBtn.setOnAction(event -> {
-                    InventoryItem item = getTableView().getItems().get(getIndex());
+                    Product item = getTableView().getItems().get(getIndex());
                     deleteItem(item);
                 });
             }
@@ -246,25 +247,24 @@ public class LimitlessFx extends Application {
     // --- LOGIC & DATA ---
 
     private void refreshData() {
-        tableData.setAll(inventoryService.findAll());
-        table.setItems(tableData);
-
-        DashboardStats stats = inventoryService.getDashboardStats();
-        totalStockLabel.setText(String.valueOf(stats.getTotalStock()));
-        totalItemsLabel.setText(String.valueOf(stats.getTotalItems()));
-        lowStockLabel.setText(String.valueOf(stats.getLowStockCount()));
+//        tableData.setAll(inventoryService.findAll());
+//        table.setItems(tableData);
+//
+//        DashboardStats stats = inventoryService.getDashboardStats();
+//        totalStockLabel.setText(String.valueOf(stats.getTotalStock()));
+//        totalItemsLabel.setText(String.valueOf(stats.getTotalItems()));
+//        lowStockLabel.setText(String.valueOf(stats.getLowStockCount()));
     }
 
     private void filterTable(String query) {
         if (query == null || query.isEmpty()) {
             table.setItems(tableData);
         } else {
-            ObservableList<InventoryItem> filtered = FXCollections.observableArrayList();
+            ObservableList<Product> filtered = FXCollections.observableArrayList();
             String lowerCaseQuery = query.toLowerCase();
-            for (InventoryItem item : tableData) {
+            for (Product item : tableData) {
                 if (item.getName().toLowerCase().contains(lowerCaseQuery) ||
-                        item.getSku().toLowerCase().contains(lowerCaseQuery) ||
-                        item.getLocation().toLowerCase().contains(lowerCaseQuery)) {
+                        item.getSourceCompany().toLowerCase().contains(lowerCaseQuery)) {
                     filtered.add(item);
                 }
             }
@@ -272,20 +272,20 @@ public class LimitlessFx extends Application {
         }
     }
 
-    private void deleteItem(InventoryItem item) {
+    private void deleteItem(Product item) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Delete Item");
         alert.setHeaderText("Are you sure you want to delete " + item.getName() + "?");
 
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            inventoryService.deleteById(item.getId());
+            inventoryService.delete(item);
             refreshData();
         }
     }
 
-    private void showItemDialog(InventoryItem item) {
-        Dialog<InventoryItem> dialog = new Dialog<>();
+    private void showItemDialog(Product item) {
+        Dialog<Product> dialog = new Dialog<>();
         dialog.setTitle(item == null ? "Add New Item" : "Edit Item");
         dialog.setHeaderText(null);
 
@@ -304,22 +304,22 @@ public class LimitlessFx extends Application {
         TextField qtyField = new TextField();
         qtyField.setPromptText("Quantity");
         TextField locField = new TextField();
-        locField.setPromptText("Location");
+        locField.setPromptText("Company");
 
         if (item != null) {
             nameField.setText(item.getName());
-            skuField.setText(item.getSku());
-            qtyField.setText(String.valueOf(item.getQuantity()));
-            locField.setText(item.getLocation());
+            skuField.setText(item.getCategory());
+            qtyField.setText(String.valueOf(item.getStock()));
+            locField.setText(item.getSourceCompany());
         }
 
         grid.add(new Label("Name:"), 0, 0);
         grid.add(nameField, 1, 0);
-        grid.add(new Label("SKU:"), 0, 1);
+        grid.add(new Label("Category:"), 0, 1);
         grid.add(skuField, 1, 1);
         grid.add(new Label("Quantity:"), 0, 2);
         grid.add(qtyField, 1, 2);
-        grid.add(new Label("Location:"), 0, 3);
+        grid.add(new Label("Company:"), 0, 3);
         grid.add(locField, 1, 3);
 
         dialog.getDialogPane().setContent(grid);
@@ -329,10 +329,10 @@ public class LimitlessFx extends Application {
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == saveButtonType) {
-                InventoryItem newItem = item != null ? item : new InventoryItem();
+                Product newItem = item != null ? item : new Product();
                 newItem.setName(nameField.getText());
-                newItem.setSku(skuField.getText());
-                newItem.setLocation(locField.getText());
+                newItem.setCategory(skuField.getText());
+                newItem.setSourceCompany(locField.getText());
                 try {
                     newItem.setQuantity(Integer.parseInt(qtyField.getText()));
                 } catch (NumberFormatException e) {
@@ -343,7 +343,7 @@ public class LimitlessFx extends Application {
             return null;
         });
 
-        Optional<InventoryItem> result = dialog.showAndWait();
+        Optional<Product> result = dialog.showAndWait();
         result.ifPresent(newItem -> {
             inventoryService.save(newItem);
             refreshData();
@@ -351,12 +351,12 @@ public class LimitlessFx extends Application {
     }
 
     private void applyStyles(ObservableList<String> stylesheets) {
-        // Safe check for absolute path style loading
-        URL cssResource = getClass().getResource("/styles.css");
-        if (cssResource != null) {
-            stylesheets.add(cssResource.toExternalForm());
-        } else {
-            System.err.println("WARNING: styles.css not found in resources! Application will look unstyled.");
-        }
+//        // Safe check for absolute path style loading
+//        URL cssResource = getClass().getResource("/styles.css");
+//        if (cssResource != null) {
+//            stylesheets.add(cssResource.toExternalForm());
+//        } else {
+//            System.err.println("WARNING: styles.css not found in resources! Application will look unstyled.");
+//        }
     }
-}v
+}
