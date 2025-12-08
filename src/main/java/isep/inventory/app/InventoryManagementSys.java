@@ -350,12 +350,11 @@ public class InventoryManagementSys extends Application {
     }
 
     private void applyStyles(ObservableList<String> stylesheets) {
-//        // Safe check for absolute path style loading
-//        URL cssResource = getClass().getResource("/styles.css");
-//        if (cssResource != null) {
-//            stylesheets.add(cssResource.toExternalForm());
-//        } else {
-//            System.err.println("WARNING: styles.css not found in resources! Application will look unstyled.");
-//        }
+        URL cssResource = getClass().getResource("/styles.css");
+        if (cssResource != null) {
+            stylesheets.add(cssResource.toExternalForm());
+        } else {
+            System.err.println("WARNING: styles.css not found in resources! Application will look unstyled.");
+        }
     }
 }
