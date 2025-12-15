@@ -37,4 +37,8 @@ public class AuthenticationService {
             throw new RuntimeException("Error hashing password", e);
         }
     }
+
+    public User getUserByUsername(String username) {
+        return userDAO.getUserByUsername(username);
+    }
 }
