@@ -17,7 +17,7 @@ public class UserDAO {
     }
 
     public boolean createUser(User user) {
-        String sql = "INSERT INTO users (username, password,firstName,lastName) VALUES (?,?,?,?,?)";
+        String sql = "INSERT INTO public.user (username, password,firstName,lastName) VALUES (?,?,?,?,?)";
         try(PreparedStatement pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, user.getUsername());
             pstmt.setString(2, user.getPassword());
@@ -41,7 +41,7 @@ public class UserDAO {
     }
 
     public boolean updateUser(User user) {
-        String sql = "UPDATE users SET firstName = ?, lastName = ?, username = ?, role = ? WHERE id = ?";
+        String sql = "UPDATE public.user SET firstName = ?, lastName = ?, username = ?, role = ? WHERE id = ?";
         try(PreparedStatement pstmt = connection.prepareStatement(sql)){
             pstmt.setString(1, user.getFirstName());
             pstmt.setString(2, user.getLastName());
@@ -57,7 +57,7 @@ public class UserDAO {
     }
 
     public boolean deleteUser(int id) {
-        String sql = "DELETE FROM users WHERE id = ?";
+        String sql = "DELETE FROM public.user WHERE id = ?";
         try(PreparedStatement pstmt = connection.prepareStatement(sql)){
             pstmt.setInt(1, id);
             return pstmt.executeUpdate() > 0;
@@ -69,7 +69,7 @@ public class UserDAO {
 
     public List<User> getAllUsers() {
         List<User> users = new ArrayList<>();
-        String sql = "SELECT * FROM users";
+        String sql = "SELECT * FROM public.user";
 
         try(Statement stmt = connection.createStatement();
         ResultSet rs = stmt.executeQuery(sql)){
@@ -91,7 +91,7 @@ public class UserDAO {
     }
 
     public User getUser(int id) {
-        String sql = "SELECT * FROM users WHERE id = ?";
+        String sql = "SELECT * FROM public.user WHERE id = ?";
         try(PreparedStatement pstmt = connection.prepareStatement(sql)){
             pstmt.setInt(1, id);
             ResultSet rs = pstmt.executeQuery();
@@ -111,13 +111,20 @@ public class UserDAO {
     }
 
     public User getUserByUsername(String username) {
-        String sql = "SELECT * FROM users WHERE username = ?";
+        String sql = "SELECT * FROM public.user WHERE username = ?";
         try(PreparedStatement pstmt = connection.prepareStatement(sql)){
             pstmt.setString(1, username);
 
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
-                return new User();
+                return new User(
+                        rs.getInt("id"),
+                        rs.getString("username"),
+                        rs.getString("firstname"),
+                        rs.getString("lastname"),
+                        rs.getString("password"),
+                        Role.valueOf(rs.getString("role")),
+                        rs.getInt("company_id"));
             }
         }catch(SQLException e){
             e.printStackTrace();

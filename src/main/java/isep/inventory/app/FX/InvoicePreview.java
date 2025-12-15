@@ -1,4 +1,6 @@
-import javafx.collections.ObservableList;
+package isep.inventory.app.FX;
+
+import isep.inventory.app.entity.Product;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;

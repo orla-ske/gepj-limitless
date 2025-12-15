@@ -1,6 +1,7 @@
 package isep.inventory.app;
 
-//import isep.inventory.app.DAO.DashboardStats;
+import isep.inventory.app.FX.WholesalerPage;
+import isep.inventory.app.FX.RetailerPage;
 import isep.inventory.app.entity.Product;
 import isep.inventory.app.entity.Role;
 import isep.inventory.app.entity.User;
@@ -21,8 +22,6 @@ import javafx.scene.paint.Color;
 import java.net.URL;
 import java.util.Optional;
 
-
-
 public class InventoryManagementSys extends Application {
 
     private Stage primaryStage;
@@ -37,6 +36,9 @@ public class InventoryManagementSys extends Application {
     private Label lowStockLabel;
     private TableView<Product> table;
 
+    // Page containers
+    private BorderPane mainLayout;
+
     public static void main(String[] args) {
         launch(args);
     }
@@ -49,7 +51,6 @@ public class InventoryManagementSys extends Application {
         this.tableData = FXCollections.observableArrayList();
 
         primaryStage.setTitle("Limitless FX - Inventory Hub");
-
         showLoginScreen();
     }
 
@@ -59,21 +60,24 @@ public class InventoryManagementSys extends Application {
         loginLayout.setPadding(new Insets(40));
         loginLayout.getStyleClass().add("login-container");
 
-        Label titleLabel = new Label("Limitless Login");
+        Label titleLabel = new Label("🔐 Limitless Login");
         titleLabel.getStyleClass().add("title-label");
 
         TextField usernameField = new TextField();
-        usernameField.setPromptText("Username (admin)");
+        usernameField.setPromptText("Username (admin/wholesaler/retailer)");
+        usernameField.setPrefWidth(300);
 
         PasswordField passwordField = new PasswordField();
         passwordField.setPromptText("Password (password)");
+        passwordField.setPrefWidth(300);
 
         Button loginButton = new Button("Sign In");
         loginButton.getStyleClass().add("primary-button");
-        loginButton.setMaxWidth(Double.MAX_VALUE);
+        loginButton.setMaxWidth(300);
 
         Label errorLabel = new Label();
         errorLabel.setTextFill(Color.RED);
+        errorLabel.setStyle("-fx-font-weight: bold;");
 
         loginButton.setOnAction(e -> {
             String user = usernameField.getText();
@@ -81,52 +85,118 @@ public class InventoryManagementSys extends Application {
 
             if(authenticationService.login(user, pass)){
                 this.currentUser = authenticationService.getUserByUsername(user);
-                showDashboardScreen();
+                showMainScreen();
             } else {
-                errorLabel.setText("Invalid credentials");
+                errorLabel.setText("❌ Invalid credentials");
             }
         });
 
         loginLayout.getChildren().addAll(titleLabel, usernameField, passwordField, loginButton, errorLabel);
 
-        Scene loginScene = new Scene(loginLayout, 400, 500);
+        Scene loginScene = new Scene(loginLayout, 450, 550);
         applyStyles(loginScene.getStylesheets());
         primaryStage.setScene(loginScene);
         primaryStage.show();
     }
 
-    private void showDashboardScreen() {
-        BorderPane root = new BorderPane();
-        root.getStyleClass().add("main-background");
+    private void showMainScreen() {
+        mainLayout = new BorderPane();
+        mainLayout.getStyleClass().add("main-background");
 
+        // Create header with navigation
+        HBox header = createHeader();
+        mainLayout.setTop(header);
+
+        // Show appropriate default view based on user role
+        if (currentUser != null) {
+            switch (currentUser.getRole()) {
+                case ADMIN:
+                    showDashboardView();
+                    break;
+                case SUPPLIER:
+                    showWholesalerView();
+                    break;
+                case RETAILER:
+                    showRetailerView();
+                    break;
+            }
+        }
+
+        Scene mainScene = new Scene(mainLayout, 1200, 750);
+        applyStyles(mainScene.getStylesheets());
+        primaryStage.setScene(mainScene);
+        primaryStage.centerOnScreen();
+
+        refreshData();
+    }
+
+    private HBox createHeader() {
         HBox header = new HBox(20);
         header.getStyleClass().add("header");
         header.setAlignment(Pos.CENTER_LEFT);
         header.setPadding(new Insets(15, 25, 15, 25));
 
-        Label appTitle = new Label("Limitless Inventory");
+        Label appTitle = new Label("📦 Limitless Inventory");
         appTitle.getStyleClass().add("header-title");
+
+        // Navigation buttons based on role
+        HBox navButtons = new HBox(10);
+        navButtons.setAlignment(Pos.CENTER_LEFT);
+
+        if (currentUser != null) {
+            if (currentUser.getRole() == Role.ADMIN) {
+                Button dashboardBtn = new Button("📊 Dashboard");
+                Button wholesalerBtn = new Button("💰 Wholesaler");
+                Button retailerBtn = new Button("🏪 Retailer");
+
+                dashboardBtn.setOnAction(e -> showDashboardView());
+                wholesalerBtn.setOnAction(e -> showWholesalerView());
+                retailerBtn.setOnAction(e -> showRetailerView());
+
+                dashboardBtn.getStyleClass().add("nav-button");
+                wholesalerBtn.getStyleClass().add("nav-button");
+                retailerBtn.getStyleClass().add("nav-button");
+
+                navButtons.getChildren().addAll(dashboardBtn, wholesalerBtn, retailerBtn);
+            } else if (currentUser.getRole() == Role.SUPPLIER) {
+                Button wholesalerBtn = new Button("💰 Wholesaler");
+                wholesalerBtn.setOnAction(e -> showWholesalerView());
+                wholesalerBtn.getStyleClass().add("nav-button");
+                navButtons.getChildren().add(wholesalerBtn);
+            } else if (currentUser.getRole() == Role.RETAILER) {
+                Button retailerBtn = new Button("🏪 Retailer");
+                retailerBtn.setOnAction(e -> showRetailerView());
+                retailerBtn.getStyleClass().add("nav-button");
+                navButtons.getChildren().add(retailerBtn);
+            }
+        }
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Label userLabel = new Label("Logged in as: " + (currentUser != null ? currentUser.getUsername() : "Unknown"));
+        Label userLabel = new Label("👤 " + (currentUser != null ? currentUser.getUsername() : "Unknown"));
         userLabel.getStyleClass().add("user-label");
 
-        Button logoutButton = new Button("Logout");
+        Button logoutButton = new Button("🚪 Logout");
         logoutButton.getStyleClass().add("danger-button");
         logoutButton.setOnAction(e -> {
             currentUser = null;
             showLoginScreen();
         });
 
-        header.getChildren().addAll(appTitle, spacer, userLabel, logoutButton);
-        root.setTop(header);
+        header.getChildren().addAll(appTitle, navButtons, spacer, userLabel, logoutButton);
+        return header;
+    }
 
+    private void showDashboardView() {
         VBox content = new VBox(20);
         content.setPadding(new Insets(25));
+        content.getStyleClass().add("page-container");
 
-        // 1. Stats Cards
+        Label pageTitle = new Label("📊 Inventory Dashboard");
+        pageTitle.getStyleClass().add("page-title");
+
+        // Stats Cards
         HBox statsContainer = new HBox(20);
         statsContainer.setAlignment(Pos.CENTER);
 
@@ -135,24 +205,25 @@ public class InventoryManagementSys extends Application {
         lowStockLabel = new Label("0");
 
         statsContainer.getChildren().addAll(
-                createStatCard("Total Stock", totalStockLabel, "stat-card-blue"),
-                createStatCard("Unique Items", totalItemsLabel, "stat-card-green"),
-                createStatCard("Low Stock Alerts", lowStockLabel, "stat-card-yellow")
+                createStatCard("📦 Total Stock", totalStockLabel, "stat-card-blue"),
+                createStatCard("🎯 Unique Items", totalItemsLabel, "stat-card-green"),
+                createStatCard("⚠️ Low Stock Alerts", lowStockLabel, "stat-card-yellow")
         );
 
-        // 2. Toolbar (Search + Add)
+        // Toolbar (Search + Add)
         HBox toolbar = new HBox(15);
         toolbar.setAlignment(Pos.CENTER_LEFT);
+        toolbar.setPadding(new Insets(10, 0, 10, 0));
 
         TextField searchField = new TextField();
-        searchField.setPromptText("Search inventory...");
-        searchField.setPrefWidth(300);
+        searchField.setPromptText("🔍 Search inventory...");
+        searchField.setPrefWidth(350);
         searchField.textProperty().addListener((obs, oldVal, newVal) -> filterTable(newVal));
 
         Region toolbarSpacer = new Region();
         HBox.setHgrow(toolbarSpacer, Priority.ALWAYS);
 
-        Button addButton = new Button("Add New Item");
+        Button addButton = new Button("➕ Add New Item");
         addButton.getStyleClass().add("primary-button");
         addButton.setOnAction(e -> showItemDialog(null));
 
@@ -162,22 +233,31 @@ public class InventoryManagementSys extends Application {
         setupTable();
         VBox.setVgrow(table, Priority.ALWAYS);
 
-        content.getChildren().addAll(statsContainer, toolbar, table);
-        root.setCenter(content);
-
-        Scene dashboardScene = new Scene(root, 1000, 700);
-        applyStyles(dashboardScene.getStylesheets());
-        primaryStage.setScene(dashboardScene);
-        primaryStage.centerOnScreen();
+        content.getChildren().addAll(pageTitle, statsContainer, toolbar, table);
+        mainLayout.setCenter(content);
 
         refreshData();
     }
 
+    private void showWholesalerView() {
+        WholesalerPage wholesalerPage = new WholesalerPage(tableData);
+        wholesalerPage.getStyleClass().add("page-container");
+        mainLayout.setCenter(wholesalerPage);
+        refreshData();
+    }
+
+    private void showRetailerView() {
+        RetailerPage retailerPage = new RetailerPage(tableData);
+        retailerPage.getStyleClass().add("page-container");
+        mainLayout.setCenter(retailerPage);
+        refreshData();
+    }
 
     private VBox createStatCard(String title, Label valueLabel, String styleClass) {
         VBox card = new VBox(10);
         card.getStyleClass().addAll("stat-card", styleClass);
-        card.setPrefWidth(250);
+        card.setPrefWidth(280);
+        card.setAlignment(Pos.CENTER);
 
         Label titleLbl = new Label(title);
         titleLbl.getStyleClass().add("stat-title");
@@ -190,20 +270,25 @@ public class InventoryManagementSys extends Application {
 
     @SuppressWarnings("unchecked")
     private void setupTable() {
-        TableColumn<Product, String> nameCol = new TableColumn<>("Name");
+        TableColumn<Product, String> nameCol = new TableColumn<>("Product Name");
         nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+        nameCol.setMinWidth(150);
 
         TableColumn<Product, String> skuCol = new TableColumn<>("Category");
         skuCol.setCellValueFactory(new PropertyValueFactory<>("category"));
+        skuCol.setMinWidth(120);
 
         TableColumn<Product, Integer> qtyCol = new TableColumn<>("Quantity");
         qtyCol.setCellValueFactory(new PropertyValueFactory<>("stock"));
+        qtyCol.setMinWidth(100);
 
         TableColumn<Product, String> locCol = new TableColumn<>("Company");
         locCol.setCellValueFactory(new PropertyValueFactory<>("sourceCompany"));
+        locCol.setMinWidth(150);
 
         TableColumn<Product, String> statusCol = new TableColumn<>("Status");
         statusCol.setCellValueFactory(new PropertyValueFactory<>("isAvailable"));
+        statusCol.setMinWidth(120);
         statusCol.setCellFactory(column -> new TableCell<Product, String>() {
             @Override
             protected void updateItem(String item, boolean empty) {
@@ -213,17 +298,18 @@ public class InventoryManagementSys extends Application {
                     setStyle("");
                 } else {
                     setText(item);
-                    if (item.contains("Low")) setStyle("-fx-text-fill: #d97706; -fx-font-weight: bold;");
-                    else if (item.contains("Out")) setStyle("-fx-text-fill: #dc2626; -fx-font-weight: bold;");
-                    else setStyle("-fx-text-fill: #16a34a; -fx-font-weight: bold;");
+                    if (item.contains("Low")) setStyle("-fx-text-fill: #fbbf24; -fx-font-weight: bold;");
+                    else if (item.contains("Out")) setStyle("-fx-text-fill: #ef4444; -fx-font-weight: bold;");
+                    else setStyle("-fx-text-fill: #10b981; -fx-font-weight: bold;");
                 }
             }
         });
 
         TableColumn<Product, Void> actionCol = new TableColumn<>("Actions");
+        actionCol.setMinWidth(150);
         actionCol.setCellFactory(param -> new TableCell<Product, Void>() {
-            private final Button editBtn = new Button("Edit");
-            private final Button deleteBtn = new Button("Delete");
+            private final Button editBtn = new Button("✏️ Edit");
+            private final Button deleteBtn = new Button("🗑️ Delete");
             private final HBox pane = new HBox(10, editBtn, deleteBtn);
 
             {
@@ -247,16 +333,37 @@ public class InventoryManagementSys extends Application {
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
     }
 
-    // --- LOGIC & DATA ---
-
     private void refreshData() {
-//        tableData.setAll(inventoryService.findAll());
-//        table.setItems(tableData);
-//
-//        DashboardStats stats = inventoryService.getDashboardStats();
-//        totalStockLabel.setText(String.valueOf(stats.getTotalStock()));
-//        totalItemsLabel.setText(String.valueOf(stats.getTotalItems()));
-//        lowStockLabel.setText(String.valueOf(stats.getLowStockCount()));
+        // Load sample data if needed
+        if (tableData.isEmpty()) {
+            loadSampleData();
+        }
+
+        if (table != null) {
+            table.setItems(tableData);
+
+            // Update stats
+            int totalStock = tableData.stream().mapToInt(Product::getStock).sum();
+            int uniqueItems = tableData.size();
+            int lowStock = (int) tableData.stream().filter(p -> p.getStock() < 10).count();
+
+            if (totalStockLabel != null) totalStockLabel.setText(String.valueOf(totalStock));
+            if (totalItemsLabel != null) totalItemsLabel.setText(String.valueOf(uniqueItems));
+            if (lowStockLabel != null) lowStockLabel.setText(String.valueOf(lowStock));
+        }
+    }
+
+    private void loadSampleData() {
+        tableData.addAll(
+                new Product("Laptop", "High-performance laptop", 999.99, 15),
+                new Product("Mouse", "Wireless mouse", 29.99, 50),
+                new Product("Keyboard", "Mechanical keyboard", 79.99, 30),
+                new Product("Monitor", "4K display monitor", 399.99, 8),
+                new Product("USB Cable", "USB-C cable", 12.99, 100),
+                new Product("Webcam", "HD webcam", 89.99, 25),
+                new Product("Headset", "Noise-cancelling headset", 149.99, 5),
+                new Product("Desk Lamp", "LED desk lamp", 39.99, 40)
+        );
     }
 
     private void filterTable(String query) {
@@ -267,7 +374,7 @@ public class InventoryManagementSys extends Application {
             String lowerCaseQuery = query.toLowerCase();
             for (Product item : tableData) {
                 if (item.getName().toLowerCase().contains(lowerCaseQuery) ||
-                        item.getSourceCompany().toLowerCase().contains(lowerCaseQuery)) {
+                        (item.getSourceCompany() != null && item.getSourceCompany().toLowerCase().contains(lowerCaseQuery))) {
                     filtered.add(item);
                 }
             }
@@ -278,11 +385,12 @@ public class InventoryManagementSys extends Application {
     private void deleteItem(Product item) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Delete Item");
-        alert.setHeaderText("Are you sure you want to delete " + item.getName() + "?");
+        alert.setHeaderText("⚠️ Are you sure you want to delete " + item.getName() + "?");
+        alert.setContentText("This action cannot be undone.");
 
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            inventoryService.delete(item);
+            tableData.remove(item);
             refreshData();
         }
     }
@@ -292,7 +400,7 @@ public class InventoryManagementSys extends Application {
         dialog.setTitle(item == null ? "Add New Item" : "Edit Item");
         dialog.setHeaderText(null);
 
-        ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
+        ButtonType saveButtonType = new ButtonType("💾 Save", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
 
         GridPane grid = new GridPane();
@@ -337,9 +445,9 @@ public class InventoryManagementSys extends Application {
                 newItem.setCategory(skuField.getText());
                 newItem.setSourceCompany(locField.getText());
                 try {
-                    newItem.setQuantity(Integer.parseInt(qtyField.getText()));
+                    newItem.setStock(Integer.parseInt(qtyField.getText()));
                 } catch (NumberFormatException e) {
-                    newItem.setQuantity(0);
+                    newItem.setStock(0);
                 }
                 return newItem;
             }
@@ -348,7 +456,9 @@ public class InventoryManagementSys extends Application {
 
         Optional<Product> result = dialog.showAndWait();
         result.ifPresent(newItem -> {
-            inventoryService.save(newItem);
+            if (item == null) {
+                tableData.add(newItem);
+            }
             refreshData();
         });
     }

@@ -18,7 +18,8 @@ public class AuthenticationService {
         User user = userDAO.getUserByUsername(username);
         if (user == null) return false;
         String hashedPassword = hashPassword(password);
-        return user.getPassword().equals(hashedPassword);
+        String pol = user.getPassword();
+        return pol.equals(hashedPassword);
     }
 
     public boolean register(String username, String password, String firstName, String lastName, String role, int companyId) {
@@ -32,7 +33,15 @@ public class AuthenticationService {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] hash = md.digest(password.getBytes());
-            return Base64.getEncoder().encodeToString(hash);
+
+            // Convert to hexadecimal
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Error hashing password", e);
         }

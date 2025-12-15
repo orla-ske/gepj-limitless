@@ -1,5 +1,11 @@
 package isep.inventory.app.entity;
 
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ObservableStringValue;
+import javafx.beans.value.ObservableValue;
+
 public class Product {
     private int id;
     private String name;
@@ -29,6 +35,13 @@ public class Product {
         this.price = price;
         this.category = category;
         this.sourceCompany = sourceCompany;
+    }
+
+    public Product(String name, String description, double price, int stock){
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.stock = stock;
     }
 
     public String getName() {
@@ -101,5 +114,21 @@ public class Product {
 
     public void setQuantity(int quantity) {
         this.quantity = quantity;
+    }
+
+    public ObservableValue<String> nameProperty(){
+        return new SimpleStringProperty(this.name);
+    }
+
+    public ObservableValue<Number> priceProperty(){
+        return new SimpleDoubleProperty(price);
+    }
+
+    public ObservableValue<Number> stockProperty(){
+        return new SimpleIntegerProperty(stock);
+    }
+
+    public ObservableValue<String> descriptionProperty(){
+        return new SimpleStringProperty(this.name);
     }
 }

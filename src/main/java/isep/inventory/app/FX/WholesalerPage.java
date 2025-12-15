@@ -1,4 +1,6 @@
-import javafx.collections.FXCollections;
+package isep.inventory.app.FX;
+
+import isep.inventory.app.entity.Product;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
@@ -74,11 +76,12 @@ public class WholesalerPage extends VBox {
         TextField descField = new TextField();
         TextField priceField = new TextField();
         TextField stockField = new TextField();
+        TextField productField = new TextField();
 
         // Populate fields if editing
         if (productToEdit != null) {
             nameField.setText(productToEdit.getName());
-            descField.setText(productField.getDescription());
+            descField.setText(productToEdit.getDescription());
             priceField.setText(String.valueOf(productToEdit.getPrice()));
             stockField.setText(String.valueOf(productToEdit.getStock()));
         }
@@ -107,10 +110,10 @@ public class WholesalerPage extends VBox {
                         products.add(new Product(name, desc, price, stock));
                     } else {
                         // Edit existing product
-                        productToEdit.nameProperty().set(name);
-                        productToEdit.descriptionProperty().set(desc);
-                        productToEdit.priceProperty().set(price);
-                        productToEdit.stockProperty().set(stock);
+                        productToEdit.setName(name);
+                        productToEdit.setDescription(desc);
+                        productToEdit.setPrice(price);
+                        productToEdit.setStock(stock);
                         // Force table refresh
                         productTable.refresh();
                     }

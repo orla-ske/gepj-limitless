@@ -1,3 +1,9 @@
+package isep.inventory.app.FX;
+
+import isep.inventory.app.entity.Product;
+import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;

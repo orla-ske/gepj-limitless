@@ -17,7 +17,7 @@ public class User {
         this.role = role;
     }
 
-    public User(String username, String password, String firstName, String lastNameRole,Role role, int company_id) {
+    public User(String username, String password, String firstName, String lastName,Role role, int company_id) {
         this.username = username;
         this.password = password;
         this.firstName = firstName;
@@ -31,6 +31,16 @@ public class User {
         this.lastName = lastName;
         this.role = role;
         this.company_id = company_id;
+    }
+
+    public User(int id, String username, String firstName,  String lastName, String password, Role role, int company_id) {
+        this.id = id;
+        this.username = username;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.role = role;
+        this.company_id = company_id;
+        this.password = password;
     }
 
     public String getFirstName() {
