@@ -7,26 +7,31 @@ import isep.inventory.app.entity.Role;
 import isep.inventory.app.entity.User;
 import isep.inventory.app.services.InventoryService;
 import isep.inventory.app.services.AuthenticationService;
+import isep.inventory.app.DAO.ProductDAO;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Side;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
+import javafx.scene.chart.*;
 import javafx.stage.Stage;
 import javafx.scene.paint.Color;
 
 import java.net.URL;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class InventoryManagementSys extends Application {
 
     private Stage primaryStage;
     private InventoryService inventoryService;
     private AuthenticationService authenticationService;
+    private ProductDAO productDAO;
     private User currentUser;
     private ObservableList<Product> tableData;
 
@@ -35,6 +40,10 @@ public class InventoryManagementSys extends Application {
     private Label totalItemsLabel;
     private Label lowStockLabel;
     private TableView<Product> table;
+
+    // Chart components
+    private PieChart stockDistributionChart;
+    private BarChart<String, Number> categoryChart;
 
     // Page containers
     private BorderPane mainLayout;
@@ -48,6 +57,7 @@ public class InventoryManagementSys extends Application {
         this.primaryStage = primaryStage;
         this.inventoryService = new InventoryService();
         this.authenticationService = new AuthenticationService();
+        this.productDAO = new ProductDAO();
         this.tableData = FXCollections.observableArrayList();
 
         primaryStage.setTitle("Limitless FX - Inventory Hub");
@@ -122,7 +132,7 @@ public class InventoryManagementSys extends Application {
             }
         }
 
-        Scene mainScene = new Scene(mainLayout, 1200, 750);
+        Scene mainScene = new Scene(mainLayout, 1400, 850);
         applyStyles(mainScene.getStylesheets());
         primaryStage.setScene(mainScene);
         primaryStage.centerOnScreen();
@@ -210,6 +220,30 @@ public class InventoryManagementSys extends Application {
                 createStatCard("⚠️ Low Stock Alerts", lowStockLabel, "stat-card-yellow")
         );
 
+        // Charts Section
+        HBox chartsContainer = new HBox(20);
+        chartsContainer.setAlignment(Pos.CENTER);
+        chartsContainer.setPrefHeight(300);
+
+        stockDistributionChart = createStockDistributionChart();
+        categoryChart = createCategoryChart();
+
+        VBox pieChartContainer = new VBox(10);
+        pieChartContainer.getStyleClass().add("chart-container");
+        Label pieChartTitle = new Label("📊 Stock Distribution");
+        pieChartTitle.getStyleClass().add("chart-title");
+        pieChartContainer.getChildren().addAll(pieChartTitle, stockDistributionChart);
+        HBox.setHgrow(pieChartContainer, Priority.ALWAYS);
+
+        VBox barChartContainer = new VBox(10);
+        barChartContainer.getStyleClass().add("chart-container");
+        Label barChartTitle = new Label("📈 Stock by Category");
+        barChartTitle.getStyleClass().add("chart-title");
+        barChartContainer.getChildren().addAll(barChartTitle, categoryChart);
+        HBox.setHgrow(barChartContainer, Priority.ALWAYS);
+
+        chartsContainer.getChildren().addAll(pieChartContainer, barChartContainer);
+
         // Toolbar (Search + Add)
         HBox toolbar = new HBox(15);
         toolbar.setAlignment(Pos.CENTER_LEFT);
@@ -227,16 +261,91 @@ public class InventoryManagementSys extends Application {
         addButton.getStyleClass().add("primary-button");
         addButton.setOnAction(e -> showItemDialog(null));
 
-        toolbar.getChildren().addAll(searchField, toolbarSpacer, addButton);
+        Button createUserButton = new Button("👤 Create User");
+        createUserButton.getStyleClass().add("primary-button");
+        createUserButton.setOnAction(e -> showCreateUserDialog());
+
+        toolbar.getChildren().addAll(searchField, toolbarSpacer, addButton, createUserButton);
 
         table = new TableView<>();
         setupTable();
         VBox.setVgrow(table, Priority.ALWAYS);
 
-        content.getChildren().addAll(pageTitle, statsContainer, toolbar, table);
+        content.getChildren().addAll(pageTitle, statsContainer, chartsContainer, toolbar, table);
         mainLayout.setCenter(content);
 
         refreshData();
+    }
+
+    private PieChart createStockDistributionChart() {
+        PieChart chart = new PieChart();
+        chart.setTitle("");
+        chart.setLegendSide(Side.RIGHT);
+        chart.setPrefHeight(250);
+        chart.setLabelsVisible(true);
+        return chart;
+    }
+
+    private BarChart<String, Number> createCategoryChart() {
+        CategoryAxis xAxis = new CategoryAxis();
+        xAxis.setLabel("Category");
+
+        NumberAxis yAxis = new NumberAxis();
+        yAxis.setLabel("Stock Quantity");
+
+        BarChart<String, Number> chart = new BarChart<>(xAxis, yAxis);
+        chart.setTitle("");
+        chart.setLegendVisible(false);
+        chart.setPrefHeight(250);
+
+        return chart;
+    }
+
+    private void updateCharts() {
+        if (stockDistributionChart != null && categoryChart != null) {
+            // Update Pie Chart - Stock Distribution
+            ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList();
+
+            int inStock = (int) tableData.stream().filter(p -> p.getStock() >= 10).count();
+            int lowStock = (int) tableData.stream().filter(p -> p.getStock() < 10 && p.getStock() > 0).count();
+            int outOfStock = (int) tableData.stream().filter(p -> p.getStock() == 0).count();
+
+            if (inStock > 0) pieChartData.add(new PieChart.Data("In Stock", inStock));
+            if (lowStock > 0) pieChartData.add(new PieChart.Data("Low Stock", lowStock));
+            if (outOfStock > 0) pieChartData.add(new PieChart.Data("Out of Stock", outOfStock));
+
+            stockDistributionChart.setData(pieChartData);
+
+            // Apply colors to pie chart
+            stockDistributionChart.getData().forEach(data -> {
+                if (data.getName().equals("In Stock")) {
+                    data.getNode().setStyle("-fx-pie-color: #10b981;");
+                } else if (data.getName().equals("Low Stock")) {
+                    data.getNode().setStyle("-fx-pie-color: #fbbf24;");
+                } else if (data.getName().equals("Out of Stock")) {
+                    data.getNode().setStyle("-fx-pie-color: #ef4444;");
+                }
+            });
+
+            // Update Bar Chart - Stock by Category
+            Map<String, Integer> categoryStockMap = tableData.stream()
+                    .collect(Collectors.groupingBy(
+                            p -> p.getCategory() != null ? p.getCategory() : "Uncategorized",
+                            Collectors.summingInt(Product::getStock)
+                    ));
+
+            XYChart.Series<String, Number> series = new XYChart.Series<>();
+            series.setName("Stock");
+
+            categoryStockMap.entrySet().stream()
+                    .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                    .forEach(entry -> {
+                        series.getData().add(new XYChart.Data<>(entry.getKey(), entry.getValue()));
+                    });
+
+            categoryChart.getData().clear();
+            categoryChart.getData().add(series);
+        }
     }
 
     private void showWholesalerView() {
@@ -334,8 +443,14 @@ public class InventoryManagementSys extends Application {
     }
 
     private void refreshData() {
-        // Load sample data if needed
-        if (tableData.isEmpty()) {
+        // Load data from database using ProductDAO
+        List<Product> productsFromDB = productDAO.getAllProducts();
+
+        if (productsFromDB != null && !productsFromDB.isEmpty()) {
+            tableData.clear();
+            tableData.addAll(productsFromDB);
+        } else if (tableData.isEmpty()) {
+            // Only load sample data if database is empty
             loadSampleData();
         }
 
@@ -350,11 +465,15 @@ public class InventoryManagementSys extends Application {
             if (totalStockLabel != null) totalStockLabel.setText(String.valueOf(totalStock));
             if (totalItemsLabel != null) totalItemsLabel.setText(String.valueOf(uniqueItems));
             if (lowStockLabel != null) lowStockLabel.setText(String.valueOf(lowStock));
+
+            // Update charts
+            updateCharts();
         }
     }
 
     private void loadSampleData() {
-        tableData.addAll(
+        // Create sample products and save them using InventoryService
+        List<Product> sampleProducts = Arrays.asList(
                 new Product("Laptop", "High-performance laptop", 999.99, 15),
                 new Product("Mouse", "Wireless mouse", 29.99, 50),
                 new Product("Keyboard", "Mechanical keyboard", 79.99, 30),
@@ -364,6 +483,12 @@ public class InventoryManagementSys extends Application {
                 new Product("Headset", "Noise-cancelling headset", 149.99, 5),
                 new Product("Desk Lamp", "LED desk lamp", 39.99, 40)
         );
+
+        for (Product product : sampleProducts) {
+            if (inventoryService.save(product)) {
+                tableData.add(product);
+            }
+        }
     }
 
     private void filterTable(String query) {
@@ -390,8 +515,14 @@ public class InventoryManagementSys extends Application {
 
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            tableData.remove(item);
-            refreshData();
+            // Use InventoryService to delete from database
+            if (inventoryService.delete(item)) {
+                tableData.remove(item);
+                refreshData();
+                showSuccessAlert("Item deleted successfully!");
+            } else {
+                showErrorAlert("Failed to delete item from database.");
+            }
         }
     }
 
@@ -416,12 +547,18 @@ public class InventoryManagementSys extends Application {
         qtyField.setPromptText("Quantity");
         TextField locField = new TextField();
         locField.setPromptText("Company");
+        TextField priceField = new TextField();
+        priceField.setPromptText("Price");
+        TextField descField = new TextField();
+        descField.setPromptText("Description");
 
         if (item != null) {
             nameField.setText(item.getName());
             skuField.setText(item.getCategory());
             qtyField.setText(String.valueOf(item.getStock()));
             locField.setText(item.getSourceCompany());
+            priceField.setText(String.valueOf(item.getPrice()));
+            descField.setText(item.getDescription());
         }
 
         grid.add(new Label("Name:"), 0, 0);
@@ -430,8 +567,12 @@ public class InventoryManagementSys extends Application {
         grid.add(skuField, 1, 1);
         grid.add(new Label("Quantity:"), 0, 2);
         grid.add(qtyField, 1, 2);
-        grid.add(new Label("Company:"), 0, 3);
-        grid.add(locField, 1, 3);
+        grid.add(new Label("Price:"), 0, 3);
+        grid.add(priceField, 1, 3);
+        grid.add(new Label("Company:"), 0, 4);
+        grid.add(locField, 1, 4);
+        grid.add(new Label("Description:"), 0, 5);
+        grid.add(descField, 1, 5);
 
         dialog.getDialogPane().setContent(grid);
 
@@ -440,27 +581,162 @@ public class InventoryManagementSys extends Application {
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == saveButtonType) {
-                Product newItem = item != null ? item : new Product();
-                newItem.setName(nameField.getText());
-                newItem.setCategory(skuField.getText());
-                newItem.setSourceCompany(locField.getText());
                 try {
-                    newItem.setStock(Integer.parseInt(qtyField.getText()));
+                    Product newItem = item != null ? item : new Product();
+                    newItem.setName(nameField.getText());
+                    newItem.setCategory(skuField.getText());
+                    newItem.setSourceCompany(locField.getText());
+                    newItem.setDescription(descField.getText());
+
+                    int quantity = Integer.parseInt(qtyField.getText());
+                    newItem.setStock(quantity);
+
+                    double price = Double.parseDouble(priceField.getText());
+                    newItem.setPrice(price);
+
+                    return newItem;
                 } catch (NumberFormatException e) {
-                    newItem.setStock(0);
+                    showErrorAlert("Invalid number format for quantity or price.");
+                    return null;
                 }
-                return newItem;
             }
             return null;
         });
 
         Optional<Product> result = dialog.showAndWait();
         result.ifPresent(newItem -> {
+            boolean success;
             if (item == null) {
-                tableData.add(newItem);
+                // Create new product using InventoryService
+                success = inventoryService.save(newItem);
+                if (success) {
+                    tableData.add(newItem);
+                    showSuccessAlert("Product added successfully!");
+                } else {
+                    showErrorAlert("Failed to add product to database.");
+                }
+            } else {
+                // Update existing product using InventoryService
+                success = inventoryService.update(newItem);
+                if (success) {
+                    showSuccessAlert("Product updated successfully!");
+                } else {
+                    showErrorAlert("Failed to update product in database.");
+                }
             }
             refreshData();
         });
+    }
+
+    private void showCreateUserDialog() {
+        Dialog<User> dialog = new Dialog<>();
+        dialog.setTitle("Create New User");
+        dialog.setHeaderText("👤 Add a new user to the system");
+
+        ButtonType createButtonType = new ButtonType("✅ Create User", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(createButtonType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        // Form fields
+        TextField usernameField = new TextField();
+        usernameField.setPromptText("Username");
+
+        PasswordField passwordField = new PasswordField();
+        passwordField.setPromptText("Password");
+
+        TextField firstNameField = new TextField();
+        firstNameField.setPromptText("First Name");
+
+        TextField lastNameField = new TextField();
+        lastNameField.setPromptText("Last Name");
+
+        ComboBox<String> roleComboBox = new ComboBox<>();
+        roleComboBox.getItems().addAll("ADMIN", "SUPPLIER", "RETAILER");
+        roleComboBox.setPromptText("Select Role");
+        roleComboBox.setValue("RETAILER");
+
+        TextField companyIdField = new TextField();
+        companyIdField.setPromptText("Company ID (number)");
+        companyIdField.setText("1");
+
+        // Add to grid
+        grid.add(new Label("Username:"), 0, 0);
+        grid.add(usernameField, 1, 0);
+        grid.add(new Label("Password:"), 0, 1);
+        grid.add(passwordField, 1, 1);
+        grid.add(new Label("First Name:"), 0, 2);
+        grid.add(firstNameField, 1, 2);
+        grid.add(new Label("Last Name:"), 0, 3);
+        grid.add(lastNameField, 1, 3);
+        grid.add(new Label("Role:"), 0, 4);
+        grid.add(roleComboBox, 1, 4);
+        grid.add(new Label("Company ID:"), 0, 5);
+        grid.add(companyIdField, 1, 5);
+
+        dialog.getDialogPane().setContent(grid);
+        applyStyles(dialog.getDialogPane().getStylesheets());
+        dialog.getDialogPane().getStyleClass().add("my-dialog");
+
+        // Enable/disable create button based on input
+        javafx.scene.Node createButton = dialog.getDialogPane().lookupButton(createButtonType);
+        createButton.setDisable(true);
+
+        // Validation listener
+        usernameField.textProperty().addListener((observable, oldValue, newValue) -> {
+            createButton.setDisable(newValue.trim().isEmpty() || passwordField.getText().trim().isEmpty());
+        });
+        passwordField.textProperty().addListener((observable, oldValue, newValue) -> {
+            createButton.setDisable(newValue.trim().isEmpty() || usernameField.getText().trim().isEmpty());
+        });
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == createButtonType) {
+                try {
+                    String username = usernameField.getText().trim();
+                    String password = passwordField.getText().trim();
+                    String firstName = firstNameField.getText().trim();
+                    String lastName = lastNameField.getText().trim();
+                    String role = roleComboBox.getValue();
+                    int companyId = Integer.parseInt(companyIdField.getText().trim());
+
+                    boolean success = authenticationService.register(username, password, firstName, lastName, role, companyId);
+
+                    if (success) {
+                        showSuccessAlert("User '" + username + "' has been created with role: " + role);
+                        return new User(username, password, firstName, lastName, Role.valueOf(role), companyId);
+                    } else {
+                        showErrorAlert("Username '" + username + "' already exists. Please choose a different username.");
+                    }
+                } catch (NumberFormatException e) {
+                    showErrorAlert("Company ID must be a valid number.");
+                } catch (IllegalArgumentException e) {
+                    showErrorAlert("Please select a valid role.");
+                }
+            }
+            return null;
+        });
+
+        dialog.showAndWait();
+    }
+
+    private void showSuccessAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Success");
+        alert.setHeaderText("✅ Operation Successful");
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private void showErrorAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText("❌ Operation Failed");
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     private void applyStyles(ObservableList<String> stylesheets) {

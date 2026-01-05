@@ -249,7 +249,7 @@
 /* Text Fields */
 .text-field {
     -fx-background-color: #334155;
-    -fx-text-fill: white;
+    -fx-text-fill: black;
     -fx-prompt-text-fill: #94a3b8;
     -fx-padding: 10px;
     -fx-background-radius: 8px;

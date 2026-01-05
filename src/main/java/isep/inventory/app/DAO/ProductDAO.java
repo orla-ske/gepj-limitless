@@ -21,8 +21,8 @@ public class ProductDAO {
      */
     public boolean createProduct(Product product){
         // Corrected SQL: The Product object seems to have 7 fields besides ID, but the SQL had 7 placeholders.
-        // Assuming your table has 7 columns: name, description, stock, available, price, category, source.
-        String sql = "INSERT INTO products (name, description, stock, available, price, category, source) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        // Assuming your table has 7 columns: name, description, stock, available, price, category, company_id.
+        String sql = "INSERT INTO product (name, description, stock, available, price, category, company_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try(PreparedStatement pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){
             pstmt.setString(1, product.getName());
             pstmt.setString(2, product.getDescription());
@@ -56,7 +56,7 @@ public class ProductDAO {
      */
     public boolean updateProduct(Product product){
         // Corrected SQL: Proper SET syntax is required for UPDATE statements.
-        String sql = "UPDATE products SET name=?, description=?, stock=?, available=?, price=?, category=?, source=? WHERE id=?";
+        String sql = "UPDATE product SET name=?, description=?, stock=?, available=?, price=?, category=?, company_id=? WHERE id=?";
 
         try(PreparedStatement pstmt = connection.prepareStatement(sql)){
             pstmt.setString(1, product.getName());
@@ -81,8 +81,8 @@ public class ProductDAO {
      * @return true if the product was successfully deleted.
      */
     public boolean deleteProduct(Product product){
-        // Corrected SQL: Table name was "product", should be consistent, e.g., "products".
-        String sql = "DELETE FROM products WHERE id=?";
+        // Corrected SQL: Table name was "product", should be consistent, e.g., "product".
+        String sql = "DELETE FROM product WHERE id=?";
 
         try(PreparedStatement pstmt = connection.prepareStatement(sql)){
             pstmt.setInt(1, product.getId());
@@ -101,7 +101,7 @@ public class ProductDAO {
     public Product getProduct(Product product){
         // Corrected logic: Use executeQuery and check the resulting ResultSet,
         // DO NOT use getGeneratedKeys for a SELECT statement.
-        String sql = "SELECT * FROM products WHERE id=?";
+        String sql = "SELECT * FROM product WHERE id=?";
         try(PreparedStatement pstmt = connection.prepareStatement(sql)){
             pstmt.setInt(1, product.getId());
             try(ResultSet rs = pstmt.executeQuery()){
@@ -114,7 +114,7 @@ public class ProductDAO {
                             rs.getBoolean("available"),
                             rs.getDouble("price"),
                             rs.getString("category"),
-                            rs.getString("source")
+                            rs.getString("company_id")
                     );
                 }
             }
@@ -125,13 +125,13 @@ public class ProductDAO {
     }
 
     /**
-     * Retrieves all products from the database.
+     * Retrieves all product from the database.
      * @return A list of all Product objects.
      */
     public List<Product> getAllProducts(){
         List<Product> products = new ArrayList<>();
-        // Corrected SQL: Table name was "product", assuming "products" is correct.
-        String sql = "SELECT * FROM products";
+        // Corrected SQL: Table name was "product", assuming "product" is correct.
+        String sql = "SELECT * FROM product";
         try(Statement stmt = connection.createStatement();
             ResultSet rs = stmt.executeQuery(sql)){
             while(rs.next()){
@@ -143,7 +143,7 @@ public class ProductDAO {
                         rs.getBoolean("available"),
                         rs.getDouble("price"),
                         rs.getString("category"),
-                        rs.getString("source")
+                        rs.getString("company_id")
                 ));
             }
             return products;
