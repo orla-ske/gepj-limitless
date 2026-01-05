@@ -9,7 +9,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
-import javafx.scene.text.TextFlow;
 import javafx.scene.transform.Scale;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -21,7 +20,6 @@ import java.util.Map;
 
 public class InvoicePreview {
     private final Stage dialogStage;
-    private Map<Product, Integer> currentCartItems;
     private String invoiceContent;
 
     public InvoicePreview(Window owner) {
