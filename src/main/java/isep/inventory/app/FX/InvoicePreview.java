@@ -20,6 +20,7 @@ import java.util.Map;
 
 public class InvoicePreview {
     private final Stage dialogStage;
+    private Map<Product, Integer> currentCartItems;
     private String invoiceContent;
 
     public InvoicePreview(Window owner) {
