@@ -1,1 +1,2 @@
-# gepj-limitless
+#  gepj-limitless 
+Project Inventory Management System 
