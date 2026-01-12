@@ -80,11 +80,16 @@ public class InvoicePreview {
         String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         String invoiceNumber = "INV-" + System.currentTimeMillis();
 
-        sb.append("Invoice Number: ").append(invoiceNumber).append("\n");
-        sb.append("Date: ").append(date).append("\n\n");
+        sb.append("═══════════════════════════════════════════════════════════════════════\n");
+        sb.append("\t\t\tRETAILER PURCHASE INVOICE\n");
+        sb.append("═══════════════════════════════════════════════════════════════════════\n\n");
 
-        sb.append(String.format("%-25s %10s %10s %15s\n", "Item", "Quantity", "Price/Unit", "Subtotal"));
-        sb.append("------------------------------------------------------------------------\n");
+        sb.append("Invoice Number:\t").append(invoiceNumber).append("\n");
+        sb.append("Date:\t\t").append(date).append("\n\n");
+
+        sb.append("───────────────────────────────────────────────────────────────────────\n");
+        sb.append("Item\t\t\tQuantity\tPrice/Unit\tSubtotal\n");
+        sb.append("───────────────────────────────────────────────────────────────────────\n");
 
         for (Map.Entry<Product, Integer> entry : cartItems.entrySet()) {
             Product product = entry.getKey();
@@ -92,15 +97,25 @@ public class InvoicePreview {
             double subtotal = product.getPrice() * quantity;
             totalAmount += subtotal;
 
-            sb.append(String.format("%-25s %10d %10.2f %15.2f\n",
-                    product.getName(),
+            // Truncate product name if too long
+            String productName = product.getName();
+            if (productName.length() > 20) {
+                productName = productName.substring(0, 17) + "...";
+            }
+
+            // Use tabs with padding for alignment
+            sb.append(String.format("%-20s\t%d\t\t$%.2f\t\t$%.2f\n",
+                    productName,
                     quantity,
                     product.getPrice(),
                     subtotal));
         }
 
-        sb.append("------------------------------------------------------------------------\n");
-        sb.append(String.format("%-47s %15.2f\n", "TOTAL AMOUNT:", totalAmount));
+        sb.append("───────────────────────────────────────────────────────────────────────\n\n");
+        sb.append(String.format("TOTAL AMOUNT:\t\t\t\t\t\t$%.2f\n", totalAmount));
+        sb.append("\n═══════════════════════════════════════════════════════════════════════\n");
+        sb.append("\t\t\tThank you for your business!\n");
+        sb.append("═══════════════════════════════════════════════════════════════════════\n");
 
         return sb.toString();
     }
