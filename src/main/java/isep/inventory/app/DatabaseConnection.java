@@ -5,9 +5,9 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DatabaseConnection {
-    private static final String URL = "jdbc:postgresql://localhost:5432/limitlessinventorymgt";
-    private static final String USER = "orlandokodjo";
-    private static final String PASSWORD = "root";
+    private static final String URL = "*";
+    private static final String USER = "*";
+    private static final String PASSWORD = "*";
 
     private static Connection connection = null;
 
