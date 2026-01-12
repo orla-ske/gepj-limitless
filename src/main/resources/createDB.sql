@@ -36,6 +36,8 @@ CREATE TABLE product (
     stock INT NOT NULL DEFAULT 0,
     category VARCHAR(255),
     company_id INT,
+    description TEXT,
+    available BOOLEAN,
     FOREIGN KEY (company_id) REFERENCES company(id) ON DELETE SET NULL
 );
 
