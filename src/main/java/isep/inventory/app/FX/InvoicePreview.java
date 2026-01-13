@@ -114,7 +114,7 @@ public class InvoicePreview {
         sb.append("───────────────────────────────────────────────────────────────────────\n\n");
         sb.append(String.format("TOTAL AMOUNT:\t\t\t\t\t\t$%.2f\n", totalAmount));
         sb.append("\n═══════════════════════════════════════════════════════════════════════\n");
-        sb.append("\t\t\tThank you for your business!\n");
+        sb.append("\t\t\tThank you for your business\n");
         sb.append("═══════════════════════════════════════════════════════════════════════\n");
 
         return sb.toString();
@@ -129,7 +129,7 @@ public class InvoicePreview {
             if (success) {
                 printerJob.endJob();
                 showAlert(Alert.AlertType.INFORMATION, "Print Successful",
-                        "Invoice sent to printer successfully!");
+                        "Invoice sent to printer successfully.");
             } else {
                 showAlert(Alert.AlertType.ERROR, "Print Failed",
                         "Failed to print the invoice.");
