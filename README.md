@@ -1,2 +1,2 @@
 # Team  gepj-limitless 
-Project Inventory Management System 
+Our Project is about Inventory Management System.
