@@ -6,8 +6,8 @@ The  Inventory Management System (IMS) is a Java - based application designed to
 The core problem this project solves is the manual tracking of inventory and invoicing. Bydigitizingthisprocess,thesystemensuresaccuratestocklevels,automatesinvoice generation, and enforces security through Role -B ased Access Control (RBAC).
 
 List of Features
- The application features distinct functionality based on the user's logged -i n role:
-Core Features
+ The application features distinct functionality based on the user's logged -in role:
+ Core Features
  Authentication: Secure login system with role detection (Admin, Supplier, Retailer).
  CSV Integration: Ability to bulk import product data from  .csv files.
  PDF Reporting: Generation of downloadable and printable PDF invoices for completed transactions.
